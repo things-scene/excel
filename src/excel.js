@@ -96,6 +96,15 @@ export default class Excel extends DataSource(RectPath(Shape)) {
       });
     }
   }
+
+  ondropfile(transfered, files) {
+    for (let i = 0; i < transfered.length; i++) {
+      if (/\.xlsx?$/.test(transfered[i].name)) {
+        this.src = files[i];
+        return;
+      }
+    }
+  }
 }
 
 Component.register("excel", Excel);
