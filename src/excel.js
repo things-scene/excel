@@ -17,11 +17,26 @@ const NATURE = {
       label: "src",
       name: "src",
       placeholder: "Excel File URL"
+    },
+    {
+      type: "number",
+      label: "period",
+      name: "period",
+      placeholder: "seconds"
     }
   ]
 };
 
 async function fetchData(url) {
+  if (!url.startsWith("data:")) {
+    // prevent read from cache
+    if (url.indexOf("?") !== -1) {
+      url = url + `&ts=${Date.now()}`;
+    } else {
+      url = url + `?ts=${Date.now()}`;
+    }
+  }
+
   const file = await fetch(url, {
     method: "GET",
     headers: {
@@ -55,6 +70,7 @@ export default class Excel extends DataSource(RectPath(Shape)) {
   }
 
   dispose() {
+    this._stopRepeater();
     super.dispose();
   }
 
@@ -62,9 +78,7 @@ export default class Excel extends DataSource(RectPath(Shape)) {
     const { src } = this.state;
 
     if (src) {
-      fetchData(src).then(data => {
-        this.setState("data", data);
-      });
+      this._initInterval();
     }
   }
 
@@ -83,18 +97,40 @@ export default class Excel extends DataSource(RectPath(Shape)) {
     return NATURE;
   }
 
-  get src() {
-    return this._src;
+  _initInterval() {
+    this._stopRepeater();
+    this._startRepeater();
   }
 
-  set src(src) {
-    this._src = src;
+  _startRepeater() {
+    var { src, period } = this.state;
+    period = Number(period);
 
-    if (src) {
-      fetchData(src).then(data => {
-        this.setState("data", data);
-      });
+    var fetchable = true;
+
+    if (period && this.app.isViewMode) {
+      this.repeatTimer = setInterval(() => {
+        fetchable &&
+          this.repeatTimer &&
+          requestAnimationFrame(() => {
+            fetchable = true;
+            fetchData(src).then(data => {
+              this.setState("data", data);
+            });
+          });
+        fetchable = false;
+      }, period * 1000);
     }
+
+    fetchData(src).then(data => {
+      this.setState("data", data);
+    });
+  }
+
+  _stopRepeater() {
+    if (this.repeatTimer) clearTimeout(this.repeatTimer);
+
+    delete this.repeatTimer;
   }
 
   ondropfile(transfered, files) {
@@ -103,6 +139,12 @@ export default class Excel extends DataSource(RectPath(Shape)) {
         this.src = files[i];
         return;
       }
+    }
+  }
+
+  onchange(after, before) {
+    if ("period" in after || "src" in after) {
+      this._initInterval();
     }
   }
 }
