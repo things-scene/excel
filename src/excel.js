@@ -5,7 +5,7 @@
 import COMPONENT_IMAGE from "./excel.png";
 
 import { Component, DataSource, RectPath, Shape } from "@hatiolab/things-scene";
-import XLSX from "xlsx";
+import XLSX from "!xlsx";
 
 const NATURE = {
   mutable: false,
