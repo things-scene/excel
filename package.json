@@ -1,7 +1,7 @@
 {
   "name": "@things-scene/excel",
   "description": "excel component for things-scene",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "things-scene": true,
   "main": "src/index.js",
   "author": "heartyoh",
